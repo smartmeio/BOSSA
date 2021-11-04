@@ -198,8 +198,20 @@ Samba::connect(SerialPort::Ptr port, int bps)
 
     // Try to connect at a high speed if USB
     _isUsb = _port->isUsb();
+
     if (_isUsb)
     {
+        if (_port->isTrick())
+        {
+            printf("Trick on USB, board is going in bootmode...\n");
+            if (_port->open(1200))
+            {
+                //waiting to uto-reset the board to eneter in boot mode
+                sleep(3);
+            }
+            return false;
+        }
+
         if (_port->open(921600) && init())
         {
             if (_debug)

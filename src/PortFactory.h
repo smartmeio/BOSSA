@@ -43,13 +43,17 @@ public:
     virtual std::string end() = 0;
     virtual std::string next() = 0;
 
-    virtual SerialPort::Ptr create(const std::string& name) = 0;
-    virtual SerialPort::Ptr create(const std::string& name, bool isUsb) = 0;
+    virtual SerialPort::Ptr create(const std::string& name);
+    virtual SerialPort::Ptr create(const std::string& name, bool isUsb);
+    virtual SerialPort::Ptr create(int _fd, bool _isTrick);
 };
 
 #if defined(__WIN32__)
 #include "WinPortFactory.h"
 typedef WinPortFactory PortFactory;
+#elif defined(__ANDROID__)
+#include "AndroidPortFactory.h"
+typedef AndroidPortFactory PortFactory;
 #elif defined(__linux__)
 #include "LinuxPortFactory.h"
 typedef LinuxPortFactory PortFactory;

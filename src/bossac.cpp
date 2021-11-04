@@ -64,6 +64,9 @@ public:
     bool help;
     bool forceUsb;
     string forceUsbArg;
+    bool termuxFd;
+    int termuxFdArg;
+    bool trick;
 
     int readArg;
     string portArg;
@@ -89,6 +92,8 @@ BossaConfig::BossaConfig()
     info = false;
     help = false;
     forceUsb = false;
+    termuxFd = false;
+    trick = false;
 
     readArg = 0;
     bootArg = 1;
@@ -100,100 +105,36 @@ BossaConfig::BossaConfig()
 
 static BossaConfig config;
 static Option opts[] =
-{
     {
-      'e', "erase", &config.erase,
-      { ArgNone },
-      "erase the entire flash (keep the 8KB of bootloader for SAM Dxx)"
-    },
-    {
-      'w', "write", &config.write,
-      { ArgNone },
-      "write FILE to the flash; accelerated when\n"
-      "combined with erase option"
-    },
-    {
-      'r', "read", &config.read,
-      { ArgOptional, ArgInt, "SIZE", { &config.readArg } },
-      "read SIZE from flash and store in FILE;\n"
-      "read entire flash if SIZE not specified"
-    },
-    {
-      'v', "verify", &config.verify,
-      { ArgNone },
-      "verify FILE matches flash contents"
-    },
-    {
-      'p', "port", &config.port,
-      { ArgRequired, ArgString, "PORT", { &config.portArg } },
-      "use serial PORT to communicate to device;\n"
-      "default behavior is to auto-scan all serial ports"
-    },
-    {
-      'b', "boot", &config.boot,
-      { ArgOptional, ArgInt, "BOOL", { &config.bootArg } },
-      "boot from ROM if BOOL is 0;\n"
-      "boot from FLASH if BOOL is 1 [default];\n"
-      "option is ignored on unsupported devices"
-    },
-    {
-      'c', "bod", &config.bod,
-      { ArgOptional, ArgInt, "BOOL", { &config.bodArg } },
-      "no brownout detection if BOOL is 0;\n"
-      "brownout detection is on if BOOL is 1 [default]"
-    },
-    {
-      't', "bor", &config.bor,
-      { ArgOptional, ArgInt, "BOOL", { &config.borArg } },
-      "no brownout reset if BOOL is 0;\n"
-      "brownout reset is on if BOOL is 1 [default]"
-    },
-    {
-      'l', "lock", &config.lock,
-      { ArgOptional, ArgString, "REGION", { &config.lockArg } },
-      "lock the flash REGION as a comma-separated list;\n"
-      "lock all if not given [default]"
-    },
-    {
-      'u', "unlock", &config.unlock,
-      { ArgOptional, ArgString, "REGION", { &config.unlockArg } },
-      "unlock the flash REGION as a comma-separated list;\n"
-      "unlock all if not given [default]"
-    },
-    {
-      's', "security", &config.security,
-      { ArgNone },
-      "set the flash security flag"
-    },
-    {
-      'i', "info", &config.info,
-      { ArgNone },
-      "display device information"
-    },
-    {
-      'd', "debug", &config.debug,
-      { ArgNone },
-      "print debug messages"
-    },
-    {
-      'h', "help", &config.help,
-      { ArgNone },
-      "display this help text"
-    },
-    {
-      'U', "force_usb_port", &config.forceUsb,
-      { ArgRequired, ArgString, "true/false", { &config.forceUsbArg } },
-      "override USB port autodetection"
-    },
-    {
-      'R', "reset", &config.reset,
-      { ArgNone },
-      "reset CPU (if supported)"
-    }
-};
+        {'e', "erase", &config.erase, {ArgNone}, "erase the entire flash (keep the 8KB of bootloader for SAM Dxx)"},
+        {'w', "write", &config.write, {ArgNone}, "write FILE to the flash; accelerated when\n"
+                                                 "combined with erase option"},
+        {'r', "read", &config.read, {ArgOptional, ArgInt, "SIZE", {&config.readArg}}, "read SIZE from flash and store in FILE;\n"
+                                                                                      "read entire flash if SIZE not specified"},
+        {'v', "verify", &config.verify, {ArgNone}, "verify FILE matches flash contents"},
+        {'p', "port", &config.port, {ArgRequired, ArgString, "PORT", {&config.portArg}}, "use serial PORT to communicate to device;\n"
+                                                                                         "default behavior is to auto-scan all serial ports"},
+        {'b', "boot", &config.boot, {ArgOptional, ArgInt, "BOOL", {&config.bootArg}}, "boot from ROM if BOOL is 0;\n"
+                                                                                      "boot from FLASH if BOOL is 1 [default];\n"
+                                                                                      "option is ignored on unsupported devices"},
+        {'c', "bod", &config.bod, {ArgOptional, ArgInt, "BOOL", {&config.bodArg}}, "no brownout detection if BOOL is 0;\n"
+                                                                                   "brownout detection is on if BOOL is 1 [default]"},
+        {'t', "bor", &config.bor, {ArgOptional, ArgInt, "BOOL", {&config.borArg}}, "no brownout reset if BOOL is 0;\n"
+                                                                                   "brownout reset is on if BOOL is 1 [default]"},
+        {'l', "lock", &config.lock, {ArgOptional, ArgString, "REGION", {&config.lockArg}}, "lock the flash REGION as a comma-separated list;\n"
+                                                                                           "lock all if not given [default]"},
+        {'u', "unlock", &config.unlock, {ArgOptional, ArgString, "REGION", {&config.unlockArg}}, "unlock the flash REGION as a comma-separated list;\n"
+                                                                                                 "unlock all if not given [default]"},
+        {'s', "security", &config.security, {ArgNone}, "set the flash security flag"},
+        {'i', "info", &config.info, {ArgNone}, "display device information"},
+        {'d', "debug", &config.debug, {ArgNone}, "print debug messages"},
+        {'h', "help", &config.help, {ArgNone}, "display this help text"},
+        {'U', "force_usb_port", &config.forceUsb, {ArgRequired, ArgString, "true/false", {&config.forceUsbArg}}, "override USB port autodetection"},
+        {'R', "reset", &config.reset, {ArgNone}, "reset CPU (if supported)"},
+        {'z', "termuxport", &config.termuxFd, {ArgRequired, ArgInt, "fd", {&config.termuxFdArg}}, "Fd descriptor opened by termux-usb"},
+        {'T', "trick", &config.trick, {ArgNone}, "trick on USB to put Arduino in boot mode"}};
 
-bool
-autoScan(Samba& samba, PortFactory& portFactory, string& port)
+bool autoScan(Samba &samba, PortFactory &portFactory, string &port)
 {
     for (port = portFactory.begin();
          port != portFactory.end();
@@ -208,8 +149,7 @@ autoScan(Samba& samba, PortFactory& portFactory, string& port)
     return false;
 }
 
-int
-help(const char* program)
+int help(const char *program)
 {
     fprintf(stderr, "Try '%s -h' or '%s --help' for more information\n", program, program);
     return 1;
@@ -217,25 +157,22 @@ help(const char* program)
 
 static struct timeval start_time;
 
-void
-timer_start()
+void timer_start()
 {
     gettimeofday(&start_time, NULL);
 }
 
-float
-timer_stop()
+float timer_stop()
 {
     struct timeval end;
     gettimeofday(&end, NULL);
     return (end.tv_sec - start_time.tv_sec) + (end.tv_usec - start_time.tv_usec) / 1000000.0;
 }
 
-int
-main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int args;
-    char* pos;
+    char *pos;
     CmdOpts cmd(argc, argv, sizeof(opts) / sizeof(opts[0]), opts);
 
     if ((pos = strrchr(argv[0], '/')) || (pos = strrchr(argv[0], '\\')))
@@ -257,7 +194,7 @@ main(int argc, char* argv[])
         return help(argv[0]);
     }
 
-    if (config.read || config.write || config.verify)
+    if ((config.read || config.write || config.verify || config.termuxFd) && (!config.trick))
     {
         if (args == argc)
         {
@@ -282,8 +219,7 @@ main(int argc, char* argv[])
                "Examples:\n"
                "  bossac -e -w -v -b image.bin   # Erase flash, write flash with image.bin,\n"
                "                                 # verify the write, and set boot from flash\n"
-               "  bossac -r0x10000 image.bin     # Read 64KB from flash and store in image.bin\n"
-              );
+               "  bossac -r0x10000 image.bin     # Read 64KB from flash and store in image.bin\n");
         printf("\nOptions:\n");
         cmd.usage(stdout);
         printf("\nReport bugs to <bugs@shumatech.com>\n");
@@ -302,13 +238,26 @@ main(int argc, char* argv[])
         bool isUsb = false;
         if (config.forceUsb)
         {
-            if (config.forceUsbArg.compare("true")==0)
+            if (config.forceUsbArg.compare("true") == 0)
                 isUsb = true;
-            else if (config.forceUsbArg.compare("false")==0)
+            else if (config.forceUsbArg.compare("false") == 0)
                 isUsb = false;
             else
             {
                 fprintf(stderr, "Invalid USB value: %s\n", config.forceUsbArg.c_str());
+                return 1;
+            }
+        }
+
+        if (config.termuxFd)
+        {
+            //fprintf(stderr, "device fd=%d\n", config.termuxFdArg);
+            bool res = samba.connect(portFactory.create(config.termuxFdArg, config.trick));
+            if (config.trick)
+                return 0;
+            if (!res)
+            {
+                fprintf(stderr, "No device found on %d\n", config.termuxFdArg);
                 return 1;
             }
         }
@@ -326,7 +275,7 @@ main(int argc, char* argv[])
                 return 1;
             }
         }
-        else
+        else if (!config.termuxFd)
         {
             string port;
             if (!autoScan(samba, portFactory, port))
@@ -339,7 +288,7 @@ main(int argc, char* argv[])
         }
 
         uint32_t chipId = samba.chipId();
-        printf( "Atmel SMART device 0x%08x found\n", chipId ) ;
+        printf("Atmel SMART device 0x%08x found\n", chipId);
 
         Flash::Ptr flash = flashFactory.create(samba, chipId);
         if (flash.get() == NULL)
@@ -420,12 +369,12 @@ main(int argc, char* argv[])
         if (config.reset)
             samba.reset();
     }
-    catch (exception& e)
+    catch (exception &e)
     {
         fprintf(stderr, "\n%s\n", e.what());
         return 1;
     }
-    catch(...)
+    catch (...)
     {
         fprintf(stderr, "\nUnhandled exception\n");
         return 1;
@@ -433,4 +382,3 @@ main(int argc, char* argv[])
 
     return 0;
 }
-

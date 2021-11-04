@@ -3,7 +3,7 @@
 #
 # Version
 #
-VERSION=1.7.0
+VERSION=1.7.1
 WXVERSION=3.0
 
 #
@@ -64,9 +64,18 @@ endif
 # Linux rules
 #
 ifeq ($(OS),Linux)
+
+OOS:=$(shell uname -o | cut -c -8)
+
+ifeq ($(OOS),Android)
+COMMON_SRCS+=LibUsbSerialPort.cpp AndroidPortFactory.cpp
+COMMON_LIBS=-Wl,--as-needed -lusb-1.0
+CLEANER=termux-elf-cleaner
+else
 COMMON_SRCS+=PosixSerialPort.cpp LinuxPortFactory.cpp
 COMMON_LIBS=-Wl,--as-needed
 WX_LIBS+=-lX11
+endif
 
 MACHINE:=$(shell uname -m)
 
@@ -311,6 +320,7 @@ strip-bossa: $(BINDIR)/bossa$(EXE)
 strip-bossac: $(BINDIR)/bossac$(EXE)
 	@echo STRIP $^
 	$(Q)strip $^
+	$(CLEANER) $^
 
 strip-bossash: $(BINDIR)/bossash$(EXE)
 	@echo STRIP $^

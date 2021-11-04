@@ -49,6 +49,7 @@ public:
 
     virtual SerialPort::Ptr create(const std::string& name);
     virtual SerialPort::Ptr create(const std::string& name, bool isUsb);
+    virtual SerialPort::Ptr create(int _fd, bool _isTrick) {};
 
 private:
     std::string _empty;
